@@ -1,23 +1,29 @@
-﻿using ASP.NETCoreD08.Data.Context;
-using ASP.NETCoreD08.Models;
+﻿using ASP.NETCoreD08.Models;
+using ASP.NETCoreD08.Respositories.DepartmentRepository;
+using ASP.NETCoreD08.Respositories.EmployeeRepository;
 using ASP.NETCoreD08.ViewModels.Employee;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace ASP.NETCoreD08.Controllers
 {
     public class EmployeeController : Controller
     {
         /*------------------------------------------------------------------*/
-        private readonly AppDbContext db = new AppDbContext();
+        private readonly IEmployeeRepository _employeeRepository;
+        private readonly IDepartmentRepository _departmentRepository;
+        /*------------------------------------------------------------------*/
+        public EmployeeController(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
+        {
+            _employeeRepository = employeeRepository;
+            _departmentRepository = departmentRepository;
+        }
         /*------------------------------------------------------------------*/
         [HttpGet]
         public IActionResult Index()
         {
             // Map From Domain Model To VM
-            var employeesReadVM = db.Employees
-                .Include(e => e.Department)
+            var employeesReadVM = _employeeRepository.GetAll()
                 .Select(e => new EmployeeReadVM
                 {
                     Id = e.Id,
@@ -34,9 +40,7 @@ namespace ASP.NETCoreD08.Controllers
         [HttpGet]
         public IActionResult Details(int id)
         {
-            var employee = db.Employees
-                .Include(e => e.Department)
-                .FirstOrDefault(e => e.Id == id);
+            var employee = _employeeRepository.GetById(id);
 
             if (employee == null)
             {
@@ -86,15 +90,15 @@ namespace ASP.NETCoreD08.Controllers
                 DepartmentId = employeeCreateVM.DepartmentId
             };
 
-            db.Employees.Add(employee);
-            db.SaveChanges();
+            _employeeRepository.Insert(employee);
+            _employeeRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var employee = db.Employees.Include(e => e.Department).FirstOrDefault(e => e.Id == id);
+            var employee = _employeeRepository.GetById(id);
             if (employee == null)
             {
                 return RedirectToAction("Index");
@@ -118,7 +122,7 @@ namespace ASP.NETCoreD08.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(EmployeeEditVM employeeEditVM)
         {
-            var employeeInDb = db.Employees.FirstOrDefault(e => e.Id == employeeEditVM.Id);
+            var employeeInDb = _employeeRepository.GetById(employeeEditVM.Id);
             if (employeeInDb == null)
             {
                 return RedirectToAction("Index");
@@ -129,26 +133,26 @@ namespace ASP.NETCoreD08.Controllers
             employeeInDb.Age = employeeEditVM.Age;
             employeeInDb.Salary = employeeEditVM.Salary;
             employeeInDb.DepartmentId = employeeEditVM.DepartmentId;
-            db.SaveChanges();
+            _employeeRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
         public IActionResult Delete(int id)
         {
-            var employee = db.Employees.FirstOrDefault(e => e.Id == id);
+            var employee = _employeeRepository.GetById(id);
             if (employee == null)
             {
                 return RedirectToAction("Index");
             }
-            db.Employees.Remove(employee);
-            db.SaveChanges();
+            _employeeRepository.Delete(employee);
+            _employeeRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
         // Helper Method
         private List<SelectListItem> GetDepartmentsForDropDown()
         {
-            return db.Departments
+            return _departmentRepository.GetAll()
              .Select(d => new SelectListItem
              {
                  Value = d.Id.ToString(),

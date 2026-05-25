@@ -10,12 +10,6 @@ namespace ASP.NETCoreD08.Data.Context
         /*------------------------------------------------------------------*/
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         /*------------------------------------------------------------------*/
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            string connectionString = "Server=MOHAMED-HATEM\\SQLEXPRESS;DataBase=ASPNETCoreD08;Trusted_Connection=true;TrustServerCertificate=true";
-            optionsBuilder.UseSqlServer(connectionString);
-        }
-        /*------------------------------------------------------------------*/
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Seeding

@@ -2,19 +2,25 @@
 using ASP.NETCoreD08.Data.Context;
 using ASP.NETCoreD08.Models;
 using Microsoft.AspNetCore.Mvc;
+using ASP.NETCoreD08.Respositories.DepartmentRepository;
 
 namespace ASP.NETCoreD08.Controllers
 {
     public class DepartmentController : Controller
     {
         /*------------------------------------------------------------------*/
-        private readonly AppDbContext db = new AppDbContext();
+        private readonly IDepartmentRepository _departmentRepository;
+        /*------------------------------------------------------------------*/
+        public DepartmentController(IDepartmentRepository departmentRepository)
+        {
+            _departmentRepository = departmentRepository;
+        }
         /*------------------------------------------------------------------*/
         // Get All Departments
         [HttpGet]
         public IActionResult Index()
         {
-            var departmentsReadVM = db.Departments.Select(d => new DepartmentReadVM
+            var departmentsReadVM = _departmentRepository.GetAll().Select(d => new DepartmentReadVM
             {
                 Id = d.Id,
                 Name = d.Name
@@ -26,7 +32,7 @@ namespace ASP.NETCoreD08.Controllers
         [HttpGet]
         public IActionResult Details(int id)
         {
-            var department = db.Departments.Find(id);
+            var department = _departmentRepository.GetById(id);
 
             if (department == null)
             {
@@ -57,15 +63,15 @@ namespace ASP.NETCoreD08.Controllers
                 Name = departmentCreateVM.Name
             };
 
-            db.Departments.Add(newDepartment);
-            db.SaveChanges();
+            _departmentRepository.Insert(newDepartment);
+            _departmentRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var department = db.Departments.Find(id);
+            var department = _departmentRepository.GetById(id);
             if (department == null)
             {
                 return RedirectToAction("Index");
@@ -84,7 +90,7 @@ namespace ASP.NETCoreD08.Controllers
         [HttpPost]
         public IActionResult Edit(DepartmentEditVM departmentEditVM)
         {
-            var departmentInDb = db.Departments.Find(departmentEditVM.Id);
+            var departmentInDb = _departmentRepository.GetById(departmentEditVM.Id);
             if (departmentInDb == null)
             {
                 return RedirectToAction("Index");
@@ -92,19 +98,19 @@ namespace ASP.NETCoreD08.Controllers
 
             // Map From VM To Domain Model
             departmentInDb.Name = departmentEditVM.Name;
-            db.SaveChanges();
+            _departmentRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
         public IActionResult Delete(int id)
         {
-            var department = db.Departments.Find(id);
+            var department = _departmentRepository.GetById(id);
             if (department == null)
             {
                 return RedirectToAction("Index");
             }
-            db.Departments.Remove(department);
-            db.SaveChanges();
+            _departmentRepository.Delete(department);
+            _departmentRepository.SaveChanges();
             return RedirectToAction("Index");
         }
         /*------------------------------------------------------------------*/
